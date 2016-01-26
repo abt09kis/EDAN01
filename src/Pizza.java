@@ -27,13 +27,12 @@ public class Pizza {
 		for(int i = 0; i < n; i++){			
 			pizzas[i] = new IntVar(store,"Pizza" + i, price[i], price[i]);
 		}
-		
+
+        IntVar[] vouchers = new IntVar[m];
+        //Creating Variables for  vouchers.
 		for(int i = 0; i < m; i++){
-			
-			for(int j = 0; j < m; j++){
-				
-			}
-		}
+            vouchers[i] = new IntVar(store, "Voucher"+i,0, free[i]);
+        }
 		
 		store.impose(c);
 
