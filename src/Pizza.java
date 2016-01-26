@@ -25,25 +25,29 @@ public class Pizza {
 		int[] free = {1,1};
 		IntVar[] paid = new IntVar[n];
         IntVar[] forFree = new IntVar[n];
+        IntVar[] voucherUsed = new IntVar[n];
+        IntVar nbrVouchers = new IntVar(store,m,m);
 
 		for(int i = 0; i < n; i++){			
 			paid[i] = new IntVar(store,"Bought Pizza" + i, 0, 1);
             forFree[i] = new IntVar(store,"Free Pizza" + i, 0, 1);
+            voucherUsed[i] = new IntVar(store, "Used voucher " + i, 0, 1);
+            store.impose(new XneqY(paid[i],forFree[i]));
+            store.impose(new XlteqY(voucherUsed[i],paid[i]));
 		}
 
         IntVar[] vouchers = new IntVar[m];
 		for(int i = 0; i < m; i++) {
             vouchers[i] = new IntVar(store, "Voucher" + i, 0, 1);
         }
-        //IntVar pizzaCost = new IntVar(store, "cost", getMaxValue(price),getSumOfArray(price));
-
-        store.impose(new LinearInt(store, paid, price, "<=",getSumOfArray(price)));
-
-
+        // Less than or equals to.
+        store.impose(new LinearInt(store, paid, price, "<",getSumOfArray(price)));
+        // The sum of vouchers used cannot be larger than the number of vouchers.
+        store.impose(new SumInt(store, voucherUsed, "<=", nbrVouchers));
+        
 
 
 	}
-    // getting the maximum value
     public static int getSumOfArray(int[] array){
         int sumOfArray = 0;
         for(int i =0; i < array.length; i++){
