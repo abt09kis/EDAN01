@@ -23,24 +23,44 @@ public class Pizza {
 		int m = 2;
 		int[] buy = {1,2};
 		int[] free = {1,1};
-		IntVar[] pizzas = new IntVar[n];
+		IntVar[] paid = new IntVar[n];
+        IntVar[] forFree = new IntVar[n];
+
 		for(int i = 0; i < n; i++){			
-			pizzas[i] = new IntVar(store,"Pizza" + i, price[i], price[i]);
+			paid[i] = new IntVar(store,"Bought Pizza" + i, 0, 1);
+            forFree[i] = new IntVar(store,"Free Pizza" + i, 0, 1);
 		}
 
         IntVar[] vouchers = new IntVar[m];
-        //Creating Variables for  vouchers.
-		for(int i = 0; i < m; i++){
-            vouchers[i] = new IntVar(store, "Voucher"+i,0, free[i]);
+		for(int i = 0; i < m; i++) {
+            vouchers[i] = new IntVar(store, "Voucher" + i, 0, 1);
         }
-		
-		store.impose(c);
+        //IntVar pizzaCost = new IntVar(store, "cost", getMaxValue(price),getSumOfArray(price));
 
-		store.impose(XlteqY());
-		
-		
-		
+        store.impose(new LinearInt(store, paid, price, "<=",getSumOfArray(price)));
+
+
+
 
 	}
+    // getting the maximum value
+    public static int getSumOfArray(int[] array){
+        int sumOfArray = 0;
+        for(int i =0; i < array.length; i++){
+            sumOfArray += array[i];
+        }
+        return sumOfArray;
+    }
+
+    public static int getMaxValue(int[] array){
+        int maxValue = array[0];
+        for(int i=1;i < array.length;i++){
+            if(array[i] > maxValue){
+                maxValue = array[i];
+
+            }
+        }
+        return maxValue;
+    }
 
 }
