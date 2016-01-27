@@ -106,7 +106,7 @@ public class Pizza {
         for (int i = 0; i < n; i++) {
             mostExpensiveFree[i] = forFree[i].value() * price[i];
         }
-
+        // Måste egentligen vara ifthenelse  ?  
         store.impose(new XlteqY(new IntVar(store,getMaxValue(mostExpensiveFree),getMaxValue(mostExpensiveFree)),new IntVar(store,getMaxValue(cheapestPizza),getMaxValue(cheapestPizza))));
 
         /*
