@@ -2,20 +2,19 @@ import org.jacop.constraints.*;
 import org.jacop.core.IntVar;
 import org.jacop.core.Store;
 import org.jacop.search.*;
-import java.util.ArrayList;
 
 public class Pizza {
     public static void main(String[] args) {
         long T1, T2, T;
 
         T1 = System.currentTimeMillis();
-        example(1);
+        SolveForData(3);
         T2 = System.currentTimeMillis();
         T = T2 - T1;
         System.out.println("\n\t*** Execution time = " + T + " ms");
     }
 
-    private static void solve(int n, int[] price, int m, int[] buy, int[] free) {
+    private static void FindSolution(int n, int[] price, int m, int[] buy, int[] free) {
         Store store = new Store();
         IntVar[] paidPizzas = new IntVar[n];
         IntVar[] freePizzas = new IntVar[n];
@@ -49,11 +48,11 @@ public class Pizza {
         }
 
         //En pizza får inte användas för att "aktivera" två olika vouchers.
-        for(int i = 0; i<getColumns(voucherBought).size(); i++){
-            store.impose(new SumInt(store, getColumns(voucherBought).get(i), "<=", new IntVar(store, 1, 1)));
-            store.impose(new SumInt(store, getColumns(voucherFree).get(i), "<=", new IntVar(store, 1, 1)));
-            store.impose(new SumInt(store, getColumns(voucherBought).get(i), "==", paidPizzas[i]));
-            store.impose(new SumInt(store, getColumns(voucherFree).get(i), "==", freePizzas[i]));
+        for(int i = 0; i<n; i++){
+            store.impose(new SumInt(store, getColumn(voucherBought, i), "<=", new IntVar(store, 1, 1)));
+            store.impose(new SumInt(store, getColumn(voucherFree, i), "<=", new IntVar(store, 1, 1)));
+            store.impose(new SumInt(store, getColumn(voucherBought, i), "==", paidPizzas[i]));
+            store.impose(new SumInt(store, getColumn(voucherFree, i), "==", freePizzas[i]));
         }
 
         //Antalet gratizpizzor får inte överstiga antalet som vouchern erbjuder.
@@ -73,10 +72,6 @@ public class Pizza {
             store.impose(new IfThenElse(nbrPaid, nbrFree, zero));
         }
 
-        IntVar cost = new IntVar(store, "Cost ", 0, sum(price));
-        bubbleSort(price);
-        store.impose(new SumWeight(paidPizzas, price, cost));
-
         //Pizza som tas gratis får inte vara dyrare än den billigaste som köpts.
         for(int i = 0; i < m; i++){
             for(int j = 0; j<n; j++){
@@ -89,16 +84,22 @@ public class Pizza {
         }
 
 
+
+        IntVar cost = new IntVar(store, "Cost ", 0, sum(price));
+        bubbleSort(price);
+        store.impose(new SumWeight(paidPizzas, price, cost));
+
+
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select = new SimpleMatrixSelect<IntVar>(voucherBought, null, new IndomainMin<IntVar>());
 
-        search.setSolutionListener(new PrintOutListener<IntVar>());
-        search.getSolutionListener().searchAll(true);
+//        search.setSolutionListener(new PrintOutListener<IntVar>());
+//        search.getSolutionListener().searchAll(true);
 
         boolean result = search.labeling(store, select, cost);
 
         if (result) {
-            System.out.println("Solution : " + java.util.Arrays.asList(paidPizzas));
+            System.out.println("Solution : ");
             System.out.println("Paid pizzas vector:");
             printVector(paidPizzas);
             System.out.println("Prices:");
@@ -113,17 +114,12 @@ public class Pizza {
 
     }
 
-    private static ArrayList<IntVar[]> getColumns(IntVar[][] matrix) {
-        ArrayList<IntVar[]> cols = new ArrayList<>();
+    private static IntVar[] getColumn(IntVar[][] matrix, int i) {
         IntVar[] col = new IntVar[matrix.length];
-
-        for (int i = 0; i < matrix[0].length; i++) {
-            for (int j = 0; j < matrix.length; j++) {
-                col[j] = matrix[j][i];
-            }
-            cols.add(col);
+        for (int j = 0; j < matrix.length; j++) {
+            col[j] = matrix[j][i];
         }
-        return cols;
+        return col;
     }
 
     private static IntVar[] mergeVectors(IntVar[] v1, IntVar[] v2){
@@ -167,7 +163,7 @@ public class Pizza {
         return sum;
     }
 
-    public static void example(int ex ){
+    public static void SolveForData(int ex ){
         switch(ex) {
             case 1:
                 int n = 4;
@@ -175,7 +171,7 @@ public class Pizza {
                 int m = 2;
                 int[] buy = {1, 2};
                 int[] free = {1, 1};
-                solve(n, price, m, buy, free);
+                FindSolution(n, price, m, buy, free);
                 break;
             case 2:
                 int n2 = 4;
@@ -183,7 +179,7 @@ public class Pizza {
                 int m2 = 7;
                 int[] buy2 = {1, 2, 2, 8, 3, 1, 4};
                 int[] free2 = {1, 1, 2 ,9, 1, 0, 1};
-                solve(n2, price2, m2, buy2, free2);
+                FindSolution(n2, price2, m2, buy2, free2);
                 break;
             case 3:
                 int n3 = 10;
@@ -191,7 +187,7 @@ public class Pizza {
                 int m3 = 4;
                 int[] buy3 = {1, 2, 1, 1};
                 int[] free3 = {1, 1, 1, 0};
-                solve(n3, price3, m3, buy3, free3);
+                FindSolution(n3, price3, m3, buy3, free3);
                 break;
             case 4:
                 int n4 = 6;
@@ -199,7 +195,7 @@ public class Pizza {
                 int m4 = 4;
                 int[] buy4 = {1, 1, 1, 1};
                 int[] free4 = {1, 0, 0, 0};
-                solve(n4, price4, m4, buy4, free4);
+                FindSolution(n4, price4, m4, buy4, free4);
                 break;
         }
     }

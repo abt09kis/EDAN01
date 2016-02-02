@@ -55,13 +55,13 @@ public class PizzaTwo
 
         }*/
 
-        for(int i = 0; i < getColumns(matrix).size(); i++){
+        for(int i = 0; i < n; i++){
             for(int j = 0; i < m; i++ ){
-                store.impose(new SumInt(store, getColumns(matrix).get(i), "<=", new IntVar(store, buy[j], buy[j])));
-                store.impose(new SumInt(store, getColumns(matrix).get(i+1),"<=", new IntVar(store,free[j],free[j])));
-                PrimitiveConstraint c1 = new SumInt(store, getColumns(matrix).get(i), ">=",new IntVar(store, buy[j],buy[j]));
-                PrimitiveConstraint c2 = new SumInt(store, getColumns(matrix).get(i), ">=",new IntVar(store, free[j],free[j]));
-                PrimitiveConstraint c3 = new SumInt(store, getColumns(matrix).get(i), "==",new IntVar(store, 0,0));
+                store.impose(new SumInt(store, getColumn(matrix,i), "<=", new IntVar(store, buy[j], buy[j])));
+                store.impose(new SumInt(store, getColumn(matrix,i), "<=", new IntVar(store,free[j],free[j])));
+                PrimitiveConstraint c1 = new SumInt(store, getColumn(matrix,i), ">=",new IntVar(store, buy[j],buy[j]));
+                PrimitiveConstraint c2 = new SumInt(store, getColumn(matrix,i), ">=",new IntVar(store, free[j],free[j]));
+                PrimitiveConstraint c3 = new SumInt(store, getColumn(matrix,i), "==",new IntVar(store, 0,0));
                 store.impose(new IfThenElse(c1, c2, c3));
             }
         }
@@ -174,17 +174,13 @@ public class PizzaTwo
         }
 
     }
-    private static ArrayList<IntVar[]> getColumns(IntVar[][] matrix) {
-        ArrayList<IntVar[]> cols = new ArrayList<>();
+    private static IntVar[] getColumn(IntVar[][] matrix, int i) {
         IntVar[] col = new IntVar[matrix.length];
 
-        for (int i = 0; i < matrix[0].length; i++) {
-            for (int j = 0; j < matrix.length; j++) {
-                col[j] = matrix[j][i];
-            }
-            cols.add(col);
+        for (int j = 0; j < matrix.length; j++) {
+            col[j] = matrix[j][i];
         }
-        return cols;
+        return col;
     }
 
     private static void printMatrix(IntVar[][] matrix) {
