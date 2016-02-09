@@ -16,56 +16,54 @@ public class Pizza {
 
     private static void FindSolution(int n, int[] price, int m, int[] buy, int[] free) {
         Store store = new Store();
-        IntVar[] paidPizzas = new IntVar[n];
+        IntVar[] boughtPizzas = new IntVar[n];
         IntVar[] freePizzas = new IntVar[n];
-        IntVar[][] voucherBought = new IntVar[m][n];
-        IntVar[][] voucherFree = new IntVar[m][n];
-
+        IntVar[][] voucherB = new IntVar[m][n];
+        IntVar[][] voucherF = new IntVar[m][n];
 
         //Populera paidPizzaz och freePizzas
         //Samt lägg till constraint för att
         //en pizza kan inte både köpas och fås.
         for(int i = 0; i < n; i++){
-            paidPizzas[i] = new IntVar(store, "Paid pizza"+(i+1), 0,1);
+            boughtPizzas[i] = new IntVar(store, "Paid pizza"+(i+1), 0,1);
             freePizzas[i] = new IntVar(store, "Free pizza"+(i+1), 0,1);
-            store.impose(new XneqY(paidPizzas[i], freePizzas[i]));
+            store.impose(new XneqY(boughtPizzas[i], freePizzas[i]));
         }
 
         //Summan av köpta och gratis pizzor ska vara = n.
         IntVar bought = new IntVar(store, "bought", n, n);
-        store.impose(new SumInt(store, mergeVector(paidPizzas, freePizzas), "==", bought));
+        store.impose(new SumInt(store, mergeVector(boughtPizzas, freePizzas), "==", bought));
 
-
-        //Populera voucherBought och voucherFree
+        //Populera voucherB och voucherF
         //Samt att en pizza kan inte fås av en voucher om den
         //användes för att aktivera vouchern.
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
-                voucherBought[i][j] = new IntVar(store, "Paid pizza" + ((i+1) * 10 + j), 0, 1);
-                voucherFree[i][j] = new IntVar(store, "Free pizza" + ((i+1)*10+j), 0, 1);
-                store.impose(new Not(new XplusYeqC(voucherBought[i][j], voucherFree[i][j], 2)));
+                voucherB[i][j] = new IntVar(store, "Paid pizza" + ((i+1) * 10 + j), 0, 1);
+                voucherF[i][j] = new IntVar(store, "Free pizza" + ((i+1)*10+j), 0, 1);
+                store.impose(new Not(new XplusYeqC(voucherB[i][j], voucherF[i][j], 2)));
             }
         }
 
         //En pizza får inte användas i två olika vouchers.
         for(int i = 0; i<n; i++){
-            store.impose(new SumInt(store, getColumn(voucherBought, i), "<=", new IntVar(store, 1, 1)));
-            store.impose(new SumInt(store, getColumn(voucherFree, i), "<=", new IntVar(store, 1, 1)));
-            store.impose(new SumInt(store, getColumn(voucherBought, i), "==", paidPizzas[i]));
-            store.impose(new SumInt(store, getColumn(voucherFree, i), "==", freePizzas[i]));
+            store.impose(new SumInt(store, getCol(voucherB, i), "<=", new IntVar(store, 1, 1)));
+            store.impose(new SumInt(store, getCol(voucherF, i), "<=", new IntVar(store, 1, 1)));
+            store.impose(new SumInt(store, getCol(voucherB, i), "==", boughtPizzas[i]));
+            store.impose(new SumInt(store, getCol(voucherF, i), "==", freePizzas[i]));
         }
 
         //Antalet gratizpizzor får inte överstiga antalet som vouchern erbjuder.
         for(int i = 0; i < m; i++){
-            store.impose(new SumInt(store, voucherFree[i], "<=", new IntVar(store, free[i], free[i])));
+            store.impose(new SumInt(store, voucherF[i], "<=", new IntVar(store, free[i], free[i])));
         }
 
         //Du får inte ta fler gratispizzor än vouchern tillåter samt
         //du får inte ta gratispizzor om du inte betalar för tillräckligt många pizzor.
         for(int i =0; i < m; i ++){
-            PrimitiveConstraint nbrPaid = new SumInt(store, voucherBought[i],">=", new IntVar(store, buy[i], buy[i]));
-            PrimitiveConstraint nbrFree = new SumInt(store, voucherFree[i],"<=", new IntVar(store, free[i], free[i]));
-            PrimitiveConstraint zero = new SumInt(store, voucherFree[i], "==", new IntVar(store, 0, 0));
+            PrimitiveConstraint nbrPaid = new SumInt(store, voucherB[i],">=", new IntVar(store, buy[i], buy[i]));
+            PrimitiveConstraint nbrFree = new SumInt(store, voucherF[i],"<=", new IntVar(store, free[i], free[i]));
+            PrimitiveConstraint zero = new SumInt(store, voucherF[i], "==", new IntVar(store, 0, 0));
             store.impose(new IfThenElse(nbrPaid, nbrFree, zero));
         }
 
@@ -73,45 +71,38 @@ public class Pizza {
         for(int i = 0; i < m; i++){
             for(int j = 0; j<n; j++){
                 for(int k = j-1; k >= 0; k--){
-                    PrimitiveConstraint c1 = new XeqC(voucherBought[i][j], 1);
-                    PrimitiveConstraint c2 = new XeqC(voucherFree[i][k], 1);
+                    PrimitiveConstraint c1 = new XeqC(voucherB[i][j], 1);
+                    PrimitiveConstraint c2 = new XeqC(voucherF[i][k], 1);
                     store.impose(new Not(new And(c1, c2)));
                 }
             }
         }
 
-
-
         IntVar cost = new IntVar(store, "Cost ", 0, sum(price));
         sort(price);
-        store.impose(new SumWeight(paidPizzas, price, cost));
-
+        store.impose(new SumWeight(boughtPizzas, price, cost));
 
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
-        SelectChoicePoint<IntVar> select = new SimpleMatrixSelect<IntVar>(mergeMatrix(voucherBought,voucherFree), null, new IndomainMin<IntVar>());
-
-//        search.setSolutionListener(new PrintOutListener<IntVar>());
-//        search.getSolutionListener().searchAll(true);
+        SelectChoicePoint<IntVar> select = new SimpleMatrixSelect<IntVar>(mergeMatrix(voucherB,voucherF), null, new IndomainMin<IntVar>());
 
         boolean result = search.labeling(store, select, cost);
 
         if (result) {
             System.out.println("Solution : ");
             System.out.println("Paid pizzas vector:");
-            printVector(paidPizzas);
+            printVector(boughtPizzas);
             System.out.println("Prices:");
             printIntVector(price);
             System.out.println("Voucher bought matrix:");
-            printMatrix(voucherBought);
+            printMatrix(voucherB);
             System.out.println("Voucher free matrix:");
-            printMatrix(voucherFree);
+            printMatrix(voucherF);
         } else {
             System.out.println("No solution found.");
         }
-
     }
 
-    private static IntVar[] getColumn(IntVar[][] matrix, int i) {
+    private static IntVar[] getCol(IntVar[][] matrix, int i) {
         IntVar[] col = new IntVar[matrix.length];
         for (int j = 0; j < matrix.length; j++) {
             col[j] = matrix[j][i];
@@ -167,7 +158,6 @@ public class Pizza {
                     array[j - 1] = array[j];
                     array[j] = temp;
                 }
-
             }
         }
     }

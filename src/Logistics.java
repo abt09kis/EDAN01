@@ -33,12 +33,12 @@ public class Logistics {
         //Måste börja i startnoden.
         store.impose(new SumInt(store, paths[start - 1], ">=",new IntVar(store,1,1)));
         for(int i = 0; i < graph_size; i++){
-            store.impose(new SumInt(store, getColumn(paths,i), "<=", new IntVar(store, 1, 1)));
+            store.impose(new SumInt(store, getCol(paths,i), "<=", new IntVar(store, 1, 1)));
         }
         // Du får inte lämna en nod du aldrig kommit till.
         for(int i = 0; i < graph_size; i ++){
             if(i!=start-1) {
-                PrimitiveConstraint c1 = new SumInt(store, getColumn(paths, i), ">", new IntVar(store, 0, 0));
+                PrimitiveConstraint c1 = new SumInt(store, getCol(paths, i), ">", new IntVar(store, 0, 0));
                 PrimitiveConstraint c2 = new SumInt(store, paths[i], "<=", new IntVar(store, 1, 1));
                 PrimitiveConstraint zero = new SumInt(store, paths[i], "==", new IntVar(store, 0, 0));
                 store.impose(new IfThenElse(c1, c2, zero));
@@ -47,12 +47,12 @@ public class Logistics {
 
         // Du måste besöka slutnoderna.
         for (int i = 0; i < n_dests; i++) {
-            store.impose(new SumInt(store, getColumn(paths, dest[i]-1), ">=", new IntVar(store, 1, 1)));
+            store.impose(new SumInt(store, getCol(paths, dest[i]-1), ">=", new IntVar(store, 1, 1)));
         }
 
 
         IntVar destCost = new IntVar(store, "Cost", 0, sum(cost));
-        store.impose(new SumWeight(vectorizeIntVar(paths), vectorizeInt(travelCost), destCost));
+        store.impose(new SumWeight(matrixToVectorIntVar(paths), matrixToVectorInt(travelCost), destCost));
 
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select = new SimpleMatrixSelect<IntVar>(paths, new SmallestDomain<IntVar>(), new IndomainMin<IntVar>());
@@ -75,10 +75,10 @@ public class Logistics {
 
     public static int isConnected(int f, int t, int[] from, int[] to, int[] cost) {
         for (int i = 0; i < from.length; i++) {
-            if (f + 1 == from[i] && t + 1 == to[i]) {
+            if (t + 1 == from[i] && f + 1 == to[i]) {
                 return cost[i];
             }
-            if (t + 1 == from[i] && f + 1 == to[i]) {
+            if (f + 1 == from[i] && t + 1 == to[i]) {
                 return cost[i];
             }
         }
@@ -93,7 +93,7 @@ public class Logistics {
         return sum;
     }
 
-    public static IntVar[] vectorizeIntVar(IntVar[][] matrix) {
+    public static IntVar[] matrixToVectorIntVar(IntVar[][] matrix) {
         IntVar[] vector = new IntVar[matrix.length * matrix[0].length];
         int index = 0;
         for (int i = 0; i < matrix.length; i++) {
@@ -105,7 +105,7 @@ public class Logistics {
         return vector;
     }
 
-    public static int[] vectorizeInt(int[][] matrix) {
+    public static int[] matrixToVectorInt(int[][] matrix) {
         int[] vector = new int[matrix.length * matrix[0].length];
         int index = 0;
         for (int i = 0; i < matrix.length; i++) {
@@ -117,7 +117,7 @@ public class Logistics {
         return vector;
     }
 
-    private static IntVar[] getColumn(IntVar[][] matrix, int i) {
+    private static IntVar[] getCol(IntVar[][] matrix, int i) {
         IntVar[] col = new IntVar[matrix.length];
         for (int j = 0; j < matrix.length; j++) {
             col[j] = matrix[j][i];
