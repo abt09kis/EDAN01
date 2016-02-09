@@ -55,15 +55,17 @@ public class Logistics {
         store.impose(new SumWeight(vectorizeIntVar(paths), vectorizeInt(travelCost), destCost));
 
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
-        SelectChoicePoint<IntVar> select = new SimpleMatrixSelect<IntVar>(paths, null, new IndomainMin<IntVar>());
+        SelectChoicePoint<IntVar> select = new SimpleMatrixSelect<IntVar>(paths, new SmallestDomain<IntVar>(), new IndomainMin<IntVar>());
 
 
 
         boolean result = search.labeling(store, select, destCost);
 
+
         if (result) {
             System.out.println("Solution : " + java.util.Arrays.asList(destCost));
             printMatrix(paths);
+            System.out.println("nodes: " +search.getNodes());
         } else {
             System.out.println("No solution found.");
         }

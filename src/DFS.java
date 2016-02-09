@@ -9,6 +9,6 @@ import org.jacop.core.*;
 import org.jacop.search.*;
 
 public class DFS {
-    
+
 
 }
