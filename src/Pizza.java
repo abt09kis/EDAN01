@@ -8,7 +8,7 @@ public class Pizza {
         long T1, T2, T;
 
         T1 = System.currentTimeMillis();
-        SolveForData(3);
+        SolveForData(1);
         T2 = System.currentTimeMillis();
         T = T2 - T1;
         System.out.println("\n\t*** Execution time = " + T + " ms");
@@ -33,7 +33,7 @@ public class Pizza {
 
         //Summan av köpta och gratis pizzor ska vara = n.
         IntVar bought = new IntVar(store, "bought", n, n);
-        store.impose(new SumInt(store, mergeVectors(paidPizzas, freePizzas), "==", bought));
+        store.impose(new SumInt(store, mergeVector(paidPizzas, freePizzas), "==", bought));
 
 
         //Populera voucherBought och voucherFree
@@ -47,7 +47,7 @@ public class Pizza {
             }
         }
 
-        //En pizza får inte användas för att "aktivera" två olika vouchers.
+        //En pizza får inte användas i två olika vouchers.
         for(int i = 0; i<n; i++){
             store.impose(new SumInt(store, getColumn(voucherBought, i), "<=", new IntVar(store, 1, 1)));
             store.impose(new SumInt(store, getColumn(voucherFree, i), "<=", new IntVar(store, 1, 1)));
@@ -59,9 +59,6 @@ public class Pizza {
         for(int i = 0; i < m; i++){
             store.impose(new SumInt(store, voucherFree[i], "<=", new IntVar(store, free[i], free[i])));
         }
-
-        //Totala antalet gratispizzor får inte överstiga summan av de gratispizzor som kan fås av vouchers.
-//        store.impose(new SumInt(store, freePizzas, "<=", new IntVar(store, sum(free), sum(free))));
 
         //Du får inte ta fler gratispizzor än vouchern tillåter samt
         //du får inte ta gratispizzor om du inte betalar för tillräckligt många pizzor.
@@ -86,12 +83,12 @@ public class Pizza {
 
 
         IntVar cost = new IntVar(store, "Cost ", 0, sum(price));
-        bubbleSort(price);
+        sort(price);
         store.impose(new SumWeight(paidPizzas, price, cost));
 
 
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
-        SelectChoicePoint<IntVar> select = new SimpleMatrixSelect<IntVar>(voucherBought, null, new IndomainMin<IntVar>());
+        SelectChoicePoint<IntVar> select = new SimpleMatrixSelect<IntVar>(mergeMatrix(voucherBought,voucherFree), null, new IndomainMin<IntVar>());
 
 //        search.setSolutionListener(new PrintOutListener<IntVar>());
 //        search.getSolutionListener().searchAll(true);
@@ -122,7 +119,27 @@ public class Pizza {
         return col;
     }
 
-    private static IntVar[] mergeVectors(IntVar[] v1, IntVar[] v2){
+    private static IntVar[][] mergeMatrix(IntVar[][] v1, IntVar[][] v2){
+        int rows = v1.length + v2.length;
+        int cols = v1[0].length;
+        int indexInRow = 0;
+        IntVar[][] mergedMatrix = new IntVar[rows][cols];
+        for(int i = 0; i < v1.length; i++) {
+            for (int j = 0; j < v1[0].length; j++){
+            mergedMatrix[indexInRow][j] = v1[i][j];
+            }
+            indexInRow++;
+        }
+        for(int i = 0; i < v2.length; i++){
+            for(int j = 0; j < v2[0].length; j++){
+                mergedMatrix[indexInRow][j] = v2[i][j];
+            }
+            indexInRow++;
+        }
+        return mergedMatrix;
+    }
+
+    private static IntVar[] mergeVector(IntVar[] v1, IntVar[] v2){
         int size = v1.length+v2.length;
         int index = 0;
         IntVar[] merged = new IntVar[size];
@@ -137,7 +154,7 @@ public class Pizza {
         return merged;
     }
 
-    public static void bubbleSort(int[] array) {
+    public static void sort(int[] array) {
 
         int o = array.length;
         int temp = 0;
